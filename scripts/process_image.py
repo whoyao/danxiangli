@@ -49,6 +49,23 @@ def process_image(img, output_width=300, output_height=400,
         top_bottom_crop: 上下各裁剪的像素数 (默认68)
     """
     original_width, original_height = img.size
+
+    # 二值化处理：去除 JPG 压缩产生的杂点
+    # 先转为灰度图，再应用阈值二值化
+    gray_img = img.convert('L')  # 转为灰度
+    threshold = 200  # 阈值，可根据需要调整
+    binary_img = gray_img.point(lambda x: 255 if x > threshold else 0, '1')
+    img = binary_img.convert('RGB')  # 转回 RGB 以便后续处理
+
+    # 在旋转之前，将第45-50行的黑色像素变为红色
+    pixels = img.load()
+    for row in range(145, 475):  # 第45-50行（索引从0开始，所以是44-49）
+        if row < img.height:  # 确保不超出图片高度
+            for col in range(img.width):
+                r, g, b = pixels[col, row]
+                # 判断是否为黑色（接近黑色的像素）
+                if r < 50 and g < 50 and b < 50:
+                    pixels[col, row] = (255, 0, 0)  # 红色
     
     print(f"原始尺寸: {original_width} x {original_height}")
     print(f"目标尺寸: {output_width} x {output_height}")
@@ -88,16 +105,19 @@ def process_image(img, output_width=300, output_height=400,
     # 将缩放后的图片粘贴到白色背景上（居中）
     result.paste(scaled_img, (x, y))
 
-    # 在旋转之前，将第45-50行的黑色像素变为红色
+    threshold = 200
+    
+    # 对彩色图像进行二值化，每个通道直接变为 0 或 255
     pixels = result.load()
-    for row in range(45, 215):  # 第45-50行（索引从0开始，所以是44-49）
-        if row < result.height:  # 确保不超出图片高度
-            for col in range(result.width):
-                r, g, b = pixels[col, row]
-                # 判断是否为黑色（接近黑色的像素）
-                if r < 50 and g < 50 and b < 50:
-                    pixels[col, row] = (255, 0, 0)  # 红色
-
+    for y in range(result.height):
+        for x in range(result.width):
+            r, g, b = pixels[x, y]
+            pixels[x, y] = (
+                255 if r > threshold else 0,
+                255 if g > threshold else 0,
+                255 if b > threshold else 0
+            )
+    
     # 旋转90度（逆时针）
     result = result.rotate(90, expand=True)
     print(f"旋转后尺寸: {result.size[0]} x {result.size[1]}")
