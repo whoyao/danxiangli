@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Image</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Noto Sans SC', 'PingFang SC', -apple-system, sans-serif;
+            color: #e8e8e8;
+            padding: 2rem;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            margin-bottom: 2rem;
+            color: #a8d8ea;
+            text-transform: uppercase;
+        }
+
+        .image-wrapper {
+            position: relative;
+            display: inline-block;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .image-wrapper:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 30px 60px -15px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(255, 255, 255, 0.15);
+        }
+
+        .daily-image {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .info {
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: #7a7a8c;
+            letter-spacing: 0.05em;
+        }
+
+        .info span {
+            color: #a8d8ea;
+        }
+
+        .update-time {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #5a5a6c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>每日一图</h1>
+        <div class="image-wrapper">
+            <img 
+                src="images/latest.jpg" 
+                alt="Daily Image" 
+                class="daily-image"
+                onerror="this.style.display='none'; this.parentElement.innerHTML='<p style=\'padding:3rem;color:#7a7a8c;\'>图片加载中...</p>';"
+            >
+        </div>
+        <p class="info">图片每日 <span>UTC 15:00</span> 自动更新</p>
+        <p class="update-time" id="update-time"></p>
+    </div>
+
+    <script>
+        // 显示当前时间
+        function updateTime() {
+            const now = new Date();
+            const utcTime = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+            document.getElementById('update-time').textContent = '当前时间: ' + utcTime;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>
+
