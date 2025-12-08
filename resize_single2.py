@@ -55,6 +55,18 @@ def process_image(input_path, output_path, output_width, output_height,
     # 将缩放后的图片粘贴到白色背景上（居中）
     result.paste(scaled_img, (x, y))
 
+    # 在旋转之前，将第45-50行的黑色像素变为红色
+    pixels = result.load()
+    for row in range(45, 215):  # 第45-50行（索引从0开始，所以是44-49）
+        if row < result.height:  # 确保不超出图片高度
+            for col in range(result.width):
+                r, g, b = pixels[col, row]
+                # 判断是否为黑色（接近黑色的像素）
+                if r < 50 and g < 50 and b < 50:
+                    pixels[col, row] = (255, 0, 0)  # 红色
+    
+    print(f"已将第45-50行的黑色像素替换为红色")
+
     # 旋转90度（逆时针）
     result = result.rotate(90, expand=True)
     print(f"旋转后尺寸: {result.size[0]} x {result.size[1]}")
@@ -69,7 +81,7 @@ def process_image(input_path, output_path, output_width, output_height,
 # 使用示例
 if __name__ == "__main__":
     # 修改这里的参数
-    input_image = "1208.jpg"      # 输入图片路径
+    input_image = "../1208.jpg"      # 输入图片路径
     output_image = "output.jpg"    # 输出图片路径
     target_width = 300             # 输出宽度
     target_height = 400            # 输出高度
