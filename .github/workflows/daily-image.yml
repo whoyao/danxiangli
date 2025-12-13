@@ -12,29 +12,43 @@ permissions:
 jobs:
   process-image:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        attempt: [1, 2, 3]  # 最多3次尝试
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
+      
       - name: Install dependencies
         run: |
           pip install Pillow requests
-
-      - name: Process daily image
-        run: |
-          python scripts/process_image.py
-
+      
+      - name: Process daily image (with retry)
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_wait_seconds: 120  # 失败后等待2分钟再重试
+          warning_on_retry: true
+          command: |
+            python scripts/process_image.py
+      
       - name: Commit and push changes
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add images/latest.jpg
-          git diff --staged --quiet || git commit -m "Update daily image - $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push
-
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add images/latest.jpg
+            git diff --staged --quiet || git commit -m "Update daily image - $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
