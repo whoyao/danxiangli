@@ -37,7 +37,7 @@ def download_image(url):
 
 
 def process_image(img, output_width=300, output_height=400,
-                  left_right_crop=60, top_bottom_crop=68):
+                  left_right_crop=60, top_crop=68, bottom_crop=68):
     """
     处理图片：裁剪边缘并缩放到指定尺寸，空白处填充白色
     
@@ -46,36 +46,37 @@ def process_image(img, output_width=300, output_height=400,
         output_width: 输出图片宽度
         output_height: 输出图片高度
         left_right_crop: 左右各裁剪的像素数 (默认60)
-        top_bottom_crop: 上下各裁剪的像素数 (默认68)
+        top_crop: 上裁剪的像素数 (默认68)
+        bottom_crop: 下裁剪的像素数 (默认68)
     """
     original_width, original_height = img.size
 
     # 二值化处理：去除 JPG 压缩产生的杂点
     # 先转为灰度图，再应用阈值二值化
     gray_img = img.convert('L')  # 转为灰度
-    threshold = 200  # 阈值，可根据需要调整
+    threshold = 150  # 阈值，可根据需要调整
     binary_img = gray_img.point(lambda x: 255 if x > threshold else 0, '1')
     img = binary_img.convert('RGB')  # 转回 RGB 以便后续处理
 
-    # 在旋转之前，将第45-50行的黑色像素变为红色
+    # 在旋转之前，将指定矩形区域中的黑色像素变为红色
     pixels = img.load()
-    for row in range(145, 475):  # 第45-50行（索引从0开始，所以是44-49）
-        if row < img.height:  # 确保不超出图片高度
-            for col in range(img.width):
-                r, g, b = pixels[col, row]
-                # 判断是否为黑色（接近黑色的像素）
-                if r < 50 and g < 50 and b < 50:
-                    pixels[col, row] = (255, 0, 0)  # 红色
+    x1, y1, x2, y2 = 90, 190, 510, 550
+    x_start, y_start = max(0, x1), max(0, y1)
+    x_end, y_end = min(img.width - 1, x2), min(img.height - 1, y2)
+    for y in range(y_start, y_end + 1):
+        for x in range(x_start, x_end + 1):
+            if pixels[x, y] == (0, 0, 0):  # 仅替换黑色像素
+                pixels[x, y] = (255, 0, 0)  # 红色
     
     print(f"原始尺寸: {original_width} x {original_height}")
     print(f"目标尺寸: {output_width} x {output_height}")
     
     # 裁剪图片 (左, 上, 右, 下)
     crop_box = (
-        left_right_crop,  # 左边裁剪
-        top_bottom_crop,  # 上边裁剪
+        left_right_crop,          # 左边裁剪
+        top_crop,                 # 上边裁剪
         original_width - left_right_crop,  # 右边裁剪
-        original_height - top_bottom_crop  # 下边裁剪
+        original_height - bottom_crop      # 下边裁剪
     )
     
     cropped_img = img.crop(crop_box)
@@ -146,8 +147,9 @@ def main():
             img,
             output_width=300,
             output_height=400,
-            left_right_crop=60,
-            top_bottom_crop=68
+            left_right_crop=30,
+            top_crop=95,
+            bottom_crop=68
         )
         
         # 保存结果
