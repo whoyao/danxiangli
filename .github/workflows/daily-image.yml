@@ -9,14 +9,17 @@ on:
 permissions:
   contents: write
 
+# 同一时间只跑一个实例（定时与手动触发重叠时排队，而不是并发抢着推送 main）
+concurrency:
+  group: daily-image
+  cancel-in-progress: false
+
 jobs:
   process-image:
     runs-on: ubuntu-latest
+    # 注意：不要用 matrix 做"重试"——matrix 是并行跑多份，会互相抢推 main 导致 push 被拒。
+    # 重试由下面各步骤里的 nick-fields/retry 负责。
 
-    strategy:
-      matrix:
-        attempt: [1, 2, 3]  # 最多3次尝试
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,4 +54,6 @@ jobs:
             git config --local user.name "github-actions[bot]"
             git add images/latest.jpg
             git diff --staged --quiet || git commit -m "Update daily image - $(date -u +'%Y-%m-%d %H:%M UTC')"
+            # 远端若已有新提交，先变基再推；latest.jpg 冲突时以本次生成的为准（变基时 theirs=本地提交）
+            git pull --rebase -X theirs origin main
             git push
